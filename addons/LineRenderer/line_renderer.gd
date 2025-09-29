@@ -49,7 +49,7 @@ func _process(_delta):
 		return
 	cameraOrigin = to_local(camera.get_global_transform().origin)
 	
-	var progressStep:float = 1.0 / points.size();
+	var progressStep:float = 1.0 / float(points.size() - 1)
 	var progress:float = 0;
 	var thickness:float = lerp(start_thickness, end_thickness, progress);
 	var nextThickness:float = lerp(start_thickness, end_thickness, progress + progressStep);
@@ -78,7 +78,7 @@ func _process(_delta):
 		var colorB:Color = Color.WHITE
 		if use_start_and_end_color:
 			colorA = start_color.lerp(end_color, progress)
-			colorB = start_color.lerp(end_color, progress + progressStep + 1)
+			colorB = start_color.lerp(end_color, progress + progressStep)
 		
 		if i == 0:
 			if draw_caps:
