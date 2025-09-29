@@ -13,8 +13,8 @@ extends MeshInstance3D
 	set(new_cap_resolution): cap_resolution = new_cap_resolution
 @export var draw_caps:bool = true:
 	set(new_draw_caps): draw_caps = new_draw_caps
-@export var draw_crners:bool = true:
-	set(new_draw_crners): draw_crners = new_draw_crners
+@export var draw_corners:bool = true:
+	set(new_draw_corners): draw_corners = new_draw_corners
 @export var use_global_coords:bool = true:
 	set(new_use_global_coords): use_global_coords = new_use_global_coords
 @export var tile_texture:bool = true:
@@ -141,7 +141,7 @@ func _process(_delta):
 			if draw_caps:
 				cap(B, A, nextThickness, cap_resolution, colorB)
 		else:
-			if draw_crners:
+			if draw_corners:
 				var C = points[i+2]
 				if use_global_coords:
 					C = to_local(C)
