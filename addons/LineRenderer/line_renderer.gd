@@ -33,7 +33,11 @@ func _process(_delta):
 	if points.size() < 2:
 		return
 	
-	camera = get_viewport().get_camera_3d()
+	if Engine.is_editor_hint():
+		camera = Engine.get_singleton("EditorInterface").get_editor_viewport_3d(0).get_camera_3d()
+	else:
+		camera = get_viewport().get_camera_3d()
+	
 	if camera == null:
 		return
 	cameraOrigin = to_local(camera.get_global_transform().origin)
