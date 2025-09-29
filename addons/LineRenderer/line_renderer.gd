@@ -19,6 +19,17 @@ extends MeshInstance3D
 	set(new_use_global_coords): use_global_coords = new_use_global_coords
 @export var tile_texture:bool = true:
 	set(new_tile_texture): tile_texture = new_tile_texture
+@export var start_color: Color = Color.WHITE:
+	set(new_color): start_color = new_color
+@export var end_color: Color = Color.WHITE:
+	set(new_color): end_color = new_color
+@export var use_start_and_end_color: bool = false:
+	set(new_value): 
+		use_start_and_end_color = new_value
+		var material:= material_override
+		if material is StandardMaterial3D:
+			material.vertex_color_use_as_albedo = true
+			material.emission_enabled = false
 
 var camera : Camera3D
 var cameraOrigin : Vector3
@@ -63,44 +74,72 @@ func _process(_delta):
 		var BtoABEnd:Vector3 = B + orthogonalABEnd
 		var BfromABEnd:Vector3 = B - orthogonalABEnd
 		
+		var colorA:Color = Color.WHITE
+		var colorB:Color = Color.WHITE
+		if use_start_and_end_color:
+			colorA = start_color.lerp(end_color, progress)
+			colorB = start_color.lerp(end_color, progress + progressStep + 1)
+		
 		if i == 0:
 			if draw_caps:
-				cap(A, B, thickness, cap_resolution)
+				cap(A, B, thickness, cap_resolution, colorA)
 		
 		if tile_texture:
 			var ABLen = AB.length()
 			var ABFloor = floor(ABLen)
 			var ABFrac = ABLen - ABFloor
 			
+			mesh.surface_set_color(colorA)
 			mesh.surface_set_uv(Vector2(ABFloor, 0))
 			mesh.surface_add_vertex(AtoABStart)
+			
+			mesh.surface_set_color(colorB)
 			mesh.surface_set_uv(Vector2(-ABFrac, 0))
 			mesh.surface_add_vertex(BtoABEnd)
+			
+			mesh.surface_set_color(colorA)
 			mesh.surface_set_uv(Vector2(ABFloor, 1))
 			mesh.surface_add_vertex(AfromABStart)
+			
+			mesh.surface_set_color(colorB)
 			mesh.surface_set_uv(Vector2(-ABFrac, 0))
 			mesh.surface_add_vertex(BtoABEnd)
+			
+			mesh.surface_set_color(colorB)
 			mesh.surface_set_uv(Vector2(-ABFrac, 1))
 			mesh.surface_add_vertex(BfromABEnd)
+			
+			mesh.surface_set_color(colorA)
 			mesh.surface_set_uv(Vector2(ABFloor, 1))
 			mesh.surface_add_vertex(AfromABStart)
 		else:
+			mesh.surface_set_color(colorA)
 			mesh.surface_set_uv(Vector2(1, 0))
 			mesh.surface_add_vertex(AtoABStart)
+			
+			mesh.surface_set_color(colorB)
 			mesh.surface_set_uv(Vector2(0, 0))
 			mesh.surface_add_vertex(BtoABEnd)
+			
+			mesh.surface_set_color(colorA)
 			mesh.surface_set_uv(Vector2(1, 1))
 			mesh.surface_add_vertex(AfromABStart)
+			
+			mesh.surface_set_color(colorB)
 			mesh.surface_set_uv(Vector2(0, 0))
 			mesh.surface_add_vertex(BtoABEnd)
+			
+			mesh.surface_set_color(colorB)
 			mesh.surface_set_uv(Vector2(0, 1))
 			mesh.surface_add_vertex(BfromABEnd)
+			
+			mesh.surface_set_color(colorA)
 			mesh.surface_set_uv(Vector2(1, 1))
 			mesh.surface_add_vertex(AfromABStart)
 		
 		if i == points.size() - 2:
 			if draw_caps:
-				cap(B, A, nextThickness, cap_resolution)
+				cap(B, A, nextThickness, cap_resolution, colorB)
 		else:
 			if draw_crners:
 				var C = points[i+2]
@@ -113,9 +152,9 @@ func _process(_delta):
 				var angleDot = AB.dot(orthogonalBCStart)
 				
 				if angleDot > 0 and not angleDot == 1:
-					corner(B, BtoABEnd, B + orthogonalBCStart, corner_resolution)
+					corner(B, BtoABEnd, B + orthogonalBCStart, corner_resolution, colorB)
 				elif angleDot < 0 and not angleDot == -1:
-					corner(B, B - orthogonalBCStart, BfromABEnd, corner_resolution)
+					corner(B, B - orthogonalBCStart, BfromABEnd, corner_resolution, colorB)
 		
 		progress += progressStep;
 		thickness = lerp(start_thickness, end_thickness, progress);
@@ -123,7 +162,7 @@ func _process(_delta):
 	
 	mesh.surface_end()
 
-func cap(center:Vector3, pivot:Vector3, thickness:float, cap_resolution:int):
+func cap(center:Vector3, pivot:Vector3, thickness:float, cap_resolution:int, color:Color):
 	var orthogonal:Vector3 = (cameraOrigin - center).cross(center - pivot).normalized() * thickness;
 	var axis:Vector3 = (center - cameraOrigin).normalized();
 	
@@ -137,14 +176,19 @@ func cap(center:Vector3, pivot:Vector3, thickness:float, cap_resolution:int):
 		vertex_array[i] = center + (orthogonal.rotated(axis, lerp(0.0, PI, float(i) / cap_resolution)));
 	
 	for i in range(1, cap_resolution + 1):
+		mesh.surface_set_color(color)
 		mesh.surface_set_uv(Vector2(0, (i - 1) / cap_resolution))
 		mesh.surface_add_vertex(vertex_array[i - 1]);
+		
+		mesh.surface_set_color(color)
 		mesh.surface_set_uv(Vector2(0, (i - 1) / cap_resolution))
 		mesh.surface_add_vertex(vertex_array[i]);
+		
+		mesh.surface_set_color(color)
 		mesh.surface_set_uv(Vector2(0.5, 0.5))
 		mesh.surface_add_vertex(center);
 		
-func corner(center:Vector3, start:Vector3, end:Vector3, cap_resolution:int):
+func corner(center:Vector3, start:Vector3, end:Vector3, cap_resolution:int, color:Color):
 	var vertex_array:Array = []
 	for i in range(cap_resolution + 1):
 		vertex_array.append(Vector3(0,0,0))
@@ -159,10 +203,15 @@ func corner(center:Vector3, start:Vector3, end:Vector3, cap_resolution:int):
 		vertex_array[i] = center + offset.rotated(axis, lerp(0.0, angle, float(i) / cap_resolution));
 	
 	for i in range(1, cap_resolution + 1):
+		mesh.surface_set_color(color)
 		mesh.surface_set_uv(Vector2(0, (i - 1) / cap_resolution))
 		mesh.surface_add_vertex(vertex_array[i - 1]);
+		
+		mesh.surface_set_color(color)
 		mesh.surface_set_uv(Vector2(0, (i - 1) / cap_resolution))
 		mesh.surface_add_vertex(vertex_array[i]);
+		
+		mesh.surface_set_color(color)
 		mesh.surface_set_uv(Vector2(0.5, 0.5))
 		mesh.surface_add_vertex(center);
 		
